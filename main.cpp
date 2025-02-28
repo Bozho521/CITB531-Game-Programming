@@ -5,8 +5,8 @@
 #include <cmath>
 #include <vector>
 
-const int SCREEN_WIDTH = 1280; // 1280
-const int SCREEN_HEIGHT = 960; // 960
+const int SCREEN_WIDTH = 1280;
+const int SCREEN_HEIGHT = 960;
 
 const int BUTTON_WIDTH = 200;
 const int BUTTON_HEIGHT = 50;
@@ -168,14 +168,13 @@ void renderGameOver(SDL_Renderer *renderer, SDL_Texture *gameOverTexture, SDL_Te
     int digitHeight = 90;
     int scoreLength = score > 0 ? (int)log10(score) + 1 : 1;
     int scorePositionX = 980 / 2 - (scoreLength * digitWidth) / 2;
-    int scorePositionY = 750 * 3 / 4; // Adjust as needed
+    int scorePositionY = 750 * 3 / 4;
 
-    SDL_Rect gameOverRect = {980 / 2 - (scoreLength * digitWidth) / 2, 750 / 8, 980 / 2, 750 / 4}; // Adjusted for clarity
+    SDL_Rect gameOverRect = {980 / 2 - (scoreLength * digitWidth) / 2, 750 / 8, 980 / 2, 750 / 4};
     SDL_RenderCopy(renderer, gameOverTexture, NULL, &gameOverRect);
     SDL_Rect scoreRect = {980 / 2 - (scoreLength * digitWidth) / 2, 750 / 2, 980 / 6, 750 / 6};
     SDL_RenderCopy(renderer, scoreTexture, NULL, &scoreRect);
 
-    // Render score
     for (int i = 0; i < scoreLength; ++i)
     {
         int digit = (int)(score / pow(10, scoreLength - i - 1)) % 10;
@@ -187,7 +186,7 @@ void renderGameOver(SDL_Renderer *renderer, SDL_Texture *gameOverTexture, SDL_Te
 CursorPosition getCurrentCursorPosition()
 {
     CursorPosition pos;
-    SDL_GetMouseState(&pos.x, &pos.y); // Get the current mouse position
+    SDL_GetMouseState(&pos.x, &pos.y);
     return pos;
 }
 
@@ -195,16 +194,15 @@ void clearEnemies(Enemy enemies[], int maxEnemies)
 {
     for (int i = 0; i < maxEnemies; ++i)
     {
-        enemies[i].isActive = false; // Deactivate the enemy
-        enemies[i].rect.x = -100;    // Move them off-screen (optional)
-        enemies[i].rect.y = -100;    // Move them off-screen (optional)
+        enemies[i].isActive = false;
+        enemies[i].rect.x = -100;
+        enemies[i].rect.y = -100;
     }
 }
 
-//*********************************************************************
 void startGame()
 {
-    const int WIDTH = 980, HEIGHT = 750; // 750 x 980
+    const int WIDTH = 980, HEIGHT = 750;
     bool boss_flag = true;
     SDL_Init(SDL_INIT_EVERYTHING);
 
@@ -272,28 +270,24 @@ void startGame()
 
     Projectile projectiles[MAX_PROJECTILES];
 
-    //!!!!!!
     Boss boss;
-    boss.isActive = false;                         // Initially inactive
-    boss.rect = {WIDTH / 2 - 150, -300, 500, 325}; // Start above the screen
-    boss.health = 100;                             // Set health
-    boss.speed = 1;                                // Set movement speed
+    boss.isActive = false;
+    boss.rect = {WIDTH / 2 - 150, -300, 500, 325}; 
+    boss.health = 100;
+    boss.speed = 1;
     boss.texture = SDL_CreateTextureFromSurface(renderer, SDL_LoadBMP("visuals/enemy.bmp"));
 
-    const int MAX_BOSS_PROJECTILES = 4; // Adjust based on desired projectile count
+    const int MAX_BOSS_PROJECTILES = 4;
     BossProjectile bossProjectiles[MAX_BOSS_PROJECTILES];
 
-    // Initialize boss projectiles
     for (int i = 0; i < MAX_BOSS_PROJECTILES; ++i)
     {
         bossProjectiles[i].isActive = false;
-        bossProjectiles[i].speed = 1;   // Adjust speed as needed
-        bossProjectiles[i].rect.w = 20; // Adjust size as needed
+        bossProjectiles[i].speed = 1;
+        bossProjectiles[i].rect.w = 20;
         bossProjectiles[i].rect.h = 20;
         bossProjectiles[i].texture = SDL_CreateTextureFromSurface(renderer, SDL_LoadBMP("visuals/enemy.bmp"));
     }
-
-    //!!!!!!
 
     for (int i = 0; i < MAX_PROJECTILES; ++i)
     {
@@ -309,7 +303,7 @@ void startGame()
     for (int i = 0; i < MAX_ENEMIES; ++i)
     {
         enemies[i].isActive = false;
-        enemies[i].speed = 1; // 1
+        enemies[i].speed = 1;
         enemies[i].rect.w = rand() % 150 + 50;
         enemies[i].rect.h = rand() % 150 + 50;
         enemies[i].texture = enemyTexture;
@@ -317,7 +311,7 @@ void startGame()
 
     int enemySpawnTimer = 0;
     const int ENEMY_SPAWN_INTERVAL = 60;
-    int ENEMY_SPEED_DIVISOR = 1; // 2
+    int ENEMY_SPEED_DIVISOR = 1;
     int cnter = 0;
 
     int score = 0;
@@ -363,12 +357,11 @@ void startGame()
         int mouseX, mouseY;
         SDL_GetMouseState(&mouseX, &mouseY);
 
-        SDL_Rect imageRect = {mouseX, mouseY, 75, 75};  // 75 75
-        SDL_Rect imageRect2 = {mouseX, mouseY, 25, 25}; //!!!
+        SDL_Rect imageRect = {mouseX, mouseY, 75, 75};
+        SDL_Rect imageRect2 = {mouseX, mouseY, 25, 25};
 
         SDL_RenderCopy(renderer, planeTexture, NULL, &imageRect);
 
-        // Enemy spawning logic
         enemySpawnTimer++;
         if (enemySpawnTimer >= ENEMY_SPAWN_INTERVAL)
         {
@@ -379,19 +372,17 @@ void startGame()
                 if (!enemies[i].isActive)
                 {
                     enemies[i].isActive = true;
-                    enemies[i].rect.x = rand() % (WIDTH - enemies[i].rect.w); // Random x position within the screen width
-                    enemies[i].rect.y = -enemies[i].rect.h;                   // Start above the screen
+                    enemies[i].rect.x = rand() % (WIDTH - enemies[i].rect.w);
+                    enemies[i].rect.y = -enemies[i].rect.h;
                     break;
                 }
             }
         }
 
-        // Move and render enemies with slower speed
         for (int i = 0; i < MAX_ENEMIES; ++i)
         {
             if (enemies[i].isActive && !boss.isActive)
             {
-                // Move enemies downward with reduced speed
                 if (score < 100 || i % 25 != 0)
                 {
                     enemies[i].rect.y += ENEMY_SPEED / ENEMY_SPEED_DIVISOR;
@@ -423,26 +414,21 @@ void startGame()
                 else
                 {
                     CursorPosition pos = getCurrentCursorPosition();
-                    // Assume these are part of your Enemy structure or maintained alongside it
                     float floatPosX = enemies[i].rect.x;
                     float floatPosY = enemies[i].rect.y;
 
-                    // Calculate direction vector
                     int dx = pos.x - floatPosX;
                     int dy = pos.y - floatPosY;
                     float distance = sqrt(dx * dx + dy * dy);
 
-                    // Normalize and apply speed
                     if (distance > 0)
-                    {                             // Ensure distance is not zero to avoid division by zero
-                        float nx = dx / distance; // Normalized direction vector x
-                        float ny = dy / distance; // Normalized direction vector y
+                    {
+                        float nx = dx / distance; 
+                        float ny = dy / distance;
 
-                        // Apply movement
                         floatPosX += nx * (ENEMY_SPEED / (float)ENEMY_SPEED_DIVISOR);
                         floatPosY += ny * (ENEMY_SPEED / (float)ENEMY_SPEED_DIVISOR);
 
-                        // Update the enemy's SDL_Rect for rendering
                         enemies[i].rect.x = static_cast<int>(round(floatPosX));
                         enemies[i].rect.y = static_cast<int>(round(floatPosY));
                     }
@@ -463,71 +449,63 @@ void startGame()
                     }
                 }
 
-                // Respawn enemies from the top when they go beyond the screen
                 if (enemies[i].rect.y > HEIGHT)
                 {
-                    enemies[i].isActive = false;                              // Deactivate the enemy
-                    enemies[i].rect.x = rand() % (WIDTH - enemies[i].rect.w); // Random x position within the screen width
-                    enemies[i].rect.y = -enemies[i].rect.h;                   // Start above the screen
-                    enemies[i].rect.w = rand() % 150 + 50;                    // Random width within a range
-                    enemies[i].rect.h = rand() % 150 + 50;                    // Random height within a range
+                    enemies[i].isActive = false;
+                    enemies[i].rect.x = rand() % (WIDTH - enemies[i].rect.w);
+                    enemies[i].rect.y = -enemies[i].rect.h;
+                    enemies[i].rect.w = rand() % 150 + 50;
+                    enemies[i].rect.h = rand() % 150 + 50;
                     continue;
                 }
 
-                // Render enemies
-                SDL_RenderCopy(renderer, enemies[i].texture, NULL, &enemies[i].rect); // Render enemies
+                SDL_RenderCopy(renderer, enemies[i].texture, NULL, &enemies[i].rect);
             }
             else if(!boss.isActive)
             {
-                // Reactivate inactive enemies when they respawn
                 enemies[i].isActive = true;
-                enemies[i].rect.x = rand() % (WIDTH - enemies[i].rect.w); // Random x position within the screen width
-                enemies[i].rect.y = -enemies[i].rect.h;                   // Start above the screen
-                enemies[i].rect.w = rand() % 150 + 50;                    // Random width within a range
-                enemies[i].rect.h = rand() % 150 + 50;                    // Random height within a range
+                enemies[i].rect.x = rand() % (WIDTH - enemies[i].rect.w);
+                enemies[i].rect.y = -enemies[i].rect.h;
+                enemies[i].rect.w = rand() % 150 + 50;
+                enemies[i].rect.h = rand() % 150 + 50;
             }
 
-            // NEW BOSS
-                if (score >= 120 && boss_flag)
+                if (score >= 30 && boss_flag)
                 {
-                    boss_flag = false;    // Ensure the boss spawns only once
-                    boss.isActive = true; // Activate the boss
+                    boss_flag = false;
+                    boss.isActive = true;
                     clearEnemies(enemies, MAX_ENEMIES);
                     SDL_Delay(200);
                 }
 
-                // If the boss is active, update its behavior
                 if (boss.isActive)
                 {
-                    // Move the boss down until it is fully on the screen
                     if (boss.rect.y < 50)
-                    { // Adjust the final position as needed
+                    {
                         boss.rect.y += boss.speed / ENEMY_SPEED_DIVISOR;
                     }
                     else
                     {
-                        // Boss movement (e.g., oscillate left and right)
-                        static int direction = 1; // 1 for right, -1 for left
+                        static int direction = 1;
                         boss.rect.x += boss.speed * direction / ENEMY_SPEED_DIVISOR;
                         if (boss.rect.x <= 0 || boss.rect.x + boss.rect.w >= WIDTH)
                         {
-                            direction *= -1; // Reverse direction when hitting screen edges
+                            direction *= -1;
                         }
                         if(boss.rect.x < 0 || boss.rect.x > 1280)
                         {
                             boss.rect.x = WIDTH / 2 - 150;
                         }
 
-                        // Check for collisions with projectiles
                         for (int j = 0; j < MAX_PROJECTILES; ++j)
                         {
                             if (projectiles[j].isActive && checkCollision(projectiles[j].rect, boss.rect))
                             {
-                                projectiles[j].isActive = false; // Deactivate the projectile
-                                boss.health -= 10;               // Decrease boss health
+                                projectiles[j].isActive = false;
+                                boss.health -= 10;
                                 if (boss.health <= 0)
                                 {
-                                    boss.isActive = false; // Boss is defeated
+                                    boss.isActive = false;
                                     std::cout << "Boss defeated!" << std::endl;
                                 }
                             }
@@ -537,7 +515,7 @@ void startGame()
                     static int bossShootTimer = 0;
                     bossShootTimer++;
                     if (bossShootTimer >= 3600)
-                    { // Shoot every 60 frames
+                    {
                         bossShootTimer = 0;
 
                         for (int i = 0; i < MAX_BOSS_PROJECTILES; ++i)
@@ -567,10 +545,8 @@ void startGame()
                         cnter++;
                     }
 
-                    // Render the boss
                     SDL_RenderCopy(renderer, boss.texture, NULL, &boss.rect);
 
-                    // Update and render boss projectiles
                     for (int i = 0; i < MAX_BOSS_PROJECTILES; ++i)
                     {
                         if (bossProjectiles[i].isActive)
@@ -599,23 +575,16 @@ void startGame()
                             if (checkCollision(bossProjectiles[i].rect, imageRect))
                             {
                                 std::cout << "Player hit by boss projectile!" << std::endl;
-                                // Collision with the plane
-                                // Render game over screen
                                 SDL_Delay(2000);
                                 SDL_RenderClear(renderer);
-                                renderGameOver(renderer, gameOverTexture, digitTextures, scoreTexture, score); // scoreTexture
+                                renderGameOver(renderer, gameOverTexture, digitTextures, scoreTexture, score);
                                 SDL_RenderPresent(renderer);
                                 SDL_Delay(2000);
                                 score = 0;
                                 SDL_DestroyTexture(backgroundTexture);
                                 SDL_DestroyTexture(gameOverTexture);
                                 SDL_DestroyTexture(scoreTexture);
-                                /*for (int i = 0; i < 10; ++i) {
-                                    if (digitTextures[i] != nullptr) {
-                                        SDL_DestroyTexture(digitTextures[i]);
-                                        digitTextures[i] = nullptr;
-                                    }
-                                }*/
+
                                 if (boss.texture)
                                 {
                                     SDL_DestroyTexture(boss.texture);
@@ -639,22 +608,18 @@ void startGame()
                         }
                     }
                 }
-                //!!!!!!!!!!!!!!
 
-            // Check collision with active projectiles
             for (int j = 0; j < MAX_PROJECTILES; ++j)
             {
                 if (projectiles[j].isActive && checkCollision(projectiles[j].rect, enemies[i].rect))
                 {
 
-                    // Projectile hits the enemy
-                    projectiles[j].isActive = false; // Deactivate projectile
-                    enemies[i].isActive = false;     // Deactivate enemy
-                    score++;                         // Increase the score
+                    projectiles[j].isActive = false; 
+                    enemies[i].isActive = false;
+                    score++;
                 }
             }
 
-            // Check collision with the plane
             for (int i = 0; i < MAX_ENEMIES; ++i)
             {
                 SDL_Rect scaledRect = {
@@ -662,25 +627,18 @@ void startGame()
                     enemies[i].rect.y,
                     7 * enemies[i].rect.w / 10,
                     7 * enemies[i].rect.h / 10};
-                if (enemies[i].isActive && checkCollision(imageRect2, scaledRect)) //!!! enemies[i].rect
+                if (enemies[i].isActive && checkCollision(imageRect2, scaledRect))
                 {
-                    // Collision with the plane
-                    // Render game over screen
                     SDL_Delay(2000);
                     SDL_RenderClear(renderer);
-                    renderGameOver(renderer, gameOverTexture, digitTextures, scoreTexture, score); // scoreTexture
+                    renderGameOver(renderer, gameOverTexture, digitTextures, scoreTexture, score);
                     SDL_RenderPresent(renderer);
                     SDL_Delay(2000);
                     score = 0;
                     SDL_DestroyTexture(backgroundTexture);
                     SDL_DestroyTexture(gameOverTexture);
                     SDL_DestroyTexture(scoreTexture);
-                    /*for (int i = 0; i < 10; ++i) {
-                        if (digitTextures[i] != nullptr) {
-                            SDL_DestroyTexture(digitTextures[i]);
-                            digitTextures[i] = nullptr;
-                        }
-                    }*/
+
                     if (boss.texture)
                     {
                         SDL_DestroyTexture(boss.texture);
@@ -715,7 +673,7 @@ void startGame()
                 }
                 else
                 {
-                    SDL_RenderCopy(renderer, projectiles[i].texture, NULL, &projectiles[i].rect); // Render projectiles
+                    SDL_RenderCopy(renderer, projectiles[i].texture, NULL, &projectiles[i].rect);
                 }
             }
         }
@@ -745,9 +703,9 @@ void startGame()
             for (int i = 0; i < digitCount; ++i)
             {
                 int digit = remainingScore / static_cast<int>(pow(10, i)) % 10;
-                SDL_Rect digitRect = {xPosition, 10, digitWidth, digitHeight}; // 10
+                SDL_Rect digitRect = {xPosition, 10, digitWidth, digitHeight};
                 SDL_RenderCopy(renderer, digitTextures[digit], NULL, &digitRect);
-                xPosition -= digitWidth; // Adjust x-position for the next digit
+                xPosition -= digitWidth;
             }
         }
 
@@ -841,7 +799,7 @@ int main(int argc, char *argv[])
         }
         else
         {
-            runMenu(); // Run the menu
+            runMenu();
 
             if (currentGameState == GameState::GAMEPLAY)
             {
