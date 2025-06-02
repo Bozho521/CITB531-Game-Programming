@@ -14,7 +14,7 @@ bool init()
 {
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
-        std::cerr << "[ERROR] SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
         return false;
     }
     else
@@ -22,7 +22,7 @@ bool init()
         gWindow = SDL_CreateWindow("Galaga Menu", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
         if (gWindow == nullptr)
         {
-            std::cerr << "[ERROR] Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+            std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
             return false;
         }
         else
@@ -30,7 +30,7 @@ bool init()
             gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
             if (gRenderer == nullptr)
             {
-                std::cerr << "[ERROR] Renderer could not be created! SDL Error: " << SDL_GetError() << std::endl;
+                std::cerr << "Renderer could not be created! SDL Error: " << SDL_GetError() << std::endl;
                 return false;
             }
             SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -39,77 +39,26 @@ bool init()
     return true;
 }
 
-// YOAN res?
-// bool loadMedia()
-// {
-//     gBackgroundTexture = loadTexture("visuals/menu.bmp");
-//     if (gBackgroundTexture == nullptr)
-//     {
-//         std::cerr << "Failed to load background texture!" << std::endl;
-//         return false;
-//     }
-
-//     gHowToPlayTexture = loadTexture("visuals/how_to_play.bmp");
-//     if (gHowToPlayTexture == nullptr)
-//     {
-//         std::cerr << "Failed to load 'How To Play' texture!" << std::endl;
-//         return false;
-//     }
-
-//     gCredits = loadTexture("visuals/credits.bmp");
-//     if (gCredits == nullptr)
-//     {
-//         std::cerr << "Failed to load credits texture!" << std::endl;
-//         return false;
-//     }
-
-//     // Constants for buttons
-//     const int buttonWidth = BUTTON_WIDTH + 100;  // You can adjust this as needed
-//     const int buttonHeight = BUTTON_HEIGHT;
-//     const int numButtons = 4;
-//     const int verticalSpacing = 50;
-
-//     // Calculate starting Y coordinate to center all buttons vertically
-//     int totalHeight = numButtons * buttonHeight + (numButtons - 1) * verticalSpacing;
-//     int startY = (SCREEN_HEIGHT - totalHeight) / 2;
-
-//     // Horizontal center for buttons
-//     int centerX = (SCREEN_WIDTH - buttonWidth) / 2;
-
-//     // Set button positions dynamically
-//     for (int i = 0; i < numButtons; ++i)
-//     {
-//         buttons[i].position = {
-//             centerX,
-//             startY + i * (buttonHeight + verticalSpacing),
-//             buttonWidth,
-//             buttonHeight
-//         };
-//     }
-
-//     return true;
-// }
-
 bool loadMedia()
 {
-    gMenu = loadTexture("visuals/menu.bmp");
-    if (gMenu == nullptr)
+    gBackgroundTexture = loadTexture("visuals/menu.bmp");
+    if (gBackgroundTexture == nullptr)
     {
-        std::cerr << "[ERROR] Failed to load background texture!" << std::endl;
+        std::cerr << "Failed to load background texture!" << std::endl;
         return false;
     }
 
     gHowToPlayTexture = loadTexture("visuals/how_to_play.bmp");
     if (gHowToPlayTexture == nullptr)
     {
-        std::cerr << "[ERROR] Failed to load 'How To Play' texture!" << std::endl;
+        std::cerr << "Failed to load 'How To Play' texture!" << std::endl;
         return false;
     }
 
     gCredits = loadTexture("visuals/credits.bmp");
     if (gCredits == nullptr)
     {
-        std::cerr << "[ERROR] Failed to load credits texture!" << std::endl;
+        std::cerr << "Failed to load credits texture!" << std::endl;
         return false;
     }
 
@@ -123,8 +72,8 @@ bool loadMedia()
 
 void close()
 {
-    SDL_DestroyTexture(gMenu);
-    gMenu = nullptr;
+    SDL_DestroyTexture(gBackgroundTexture);
+    gBackgroundTexture = nullptr;
     SDL_DestroyRenderer(gRenderer);
     gRenderer = nullptr;
     SDL_DestroyWindow(gWindow);
@@ -134,6 +83,8 @@ void close()
 
 void runMenu()
 {
+    std::cerr << "void runMenu()" << SDL_GetError() << std::endl;
+
     // PlaySound(TEXT("sfx/menumusic.wav"), NULL, SND_FILENAME | SND_ASYNC);
     while (!quit && currentGameState == GameState::MENU)
     {
@@ -159,9 +110,12 @@ void runMenu()
             }
         }
 
-        SDL_RenderClear(gRenderer);
-        SDL_RenderCopy(gRenderer, gMenu, nullptr, nullptr);
-        SDL_RenderPresent(gRenderer);
+        if (gRenderer && gBackgroundTexture)
+        {
+            SDL_RenderClear(gRenderer);
+            SDL_RenderCopy(gRenderer, gBackgroundTexture, nullptr, nullptr);
+            SDL_RenderPresent(gRenderer);
+        }
     }
 }
 
@@ -247,7 +201,12 @@ void runCredits()
         {
             SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
             SDL_RenderClear(gRenderer);
+
             SDL_RenderCopy(gRenderer, gCredits, nullptr, nullptr);
+
+            SDL_SetRenderDrawColor(gRenderer, 255, 255, 255, 255);
+            SDL_RenderFillRect(gRenderer, &footerBox);
+
             SDL_RenderPresent(gRenderer);
         }
     }
@@ -255,13 +214,40 @@ void runCredits()
 
 void startGame()
 {
+    bool miniBoss_flag = true;
+    bool megaBoss_flag = true;
+
+    if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
+    {
+        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+        return;
+    }
+
     SDL_ShowCursor(SDL_DISABLE);
 
-    loadGame(gRenderer, gWindow);
-    gameLogic(gRenderer, gWindow, SCREEN_WIDTH, SCREEN_HEIGHT, miniBoss_flag, megaBoss_flag);
+    SDL_Window *window = SDL_CreateWindow("Armagedon", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI);
+    if (window == nullptr)
+    {
+        std::cerr << "Could not create window: " << SDL_GetError() << std::endl;
+        SDL_Quit();
+        return;
+    }
 
-    SDL_DestroyRenderer(gRenderer);
-    SDL_DestroyWindow(gWindow);
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (renderer == nullptr)
+    {
+        std::cerr << "Could not create renderer: " << SDL_GetError() << std::endl;
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return;
+    }
+
+    loadGame(renderer, window);
+    gameLogic(renderer, window, SCREEN_WIDTH, SCREEN_HEIGHT, miniBoss_flag, megaBoss_flag);
+
+    // Cleanup after gameLogic finishes
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
     SDL_Quit();
 }
 
@@ -269,49 +255,43 @@ void loadGame(SDL_Renderer *renderer, SDL_Window *window)
 {
     SDL_Surface *backgroundSurface = SDL_LoadBMP("visuals/background.bmp");
     SDL_Surface *gameOverSurface = SDL_LoadBMP("visuals/gameover.bmp");
-    SDL_Surface *gameOverBackgroundSurface = SDL_LoadBMP("visuals/gameOverBackground.bmp");
-    SDL_Surface *scoreSurface = SDL_LoadBMP("visuals/playerScore.bmp");
+    SDL_Surface *scoreSurface = SDL_LoadBMP("visuals/score.bmp");
     SDL_Surface *planeSurface = SDL_LoadBMP("visuals/plane.bmp");
     SDL_Surface *projectileSurface = SDL_LoadBMP("visuals/projectile.bmp");
     SDL_Surface *enemySurface = SDL_LoadBMP("visuals/enemy.bmp");
     SDL_Surface *portalSurface = SDL_LoadBMP("visuals/portal_in.bmp");
     SDL_Surface *portalOutSurface = SDL_LoadBMP("visuals/portal_out.bmp");
-    SDL_Surface *cautionSignSurface = SDL_LoadBMP("visuals/caution.bmp");
-
 
     if (!backgroundSurface || !gameOverSurface || !scoreSurface || !planeSurface ||
         !projectileSurface || !enemySurface || !portalSurface || !portalOutSurface)
     {
-        std::cerr << "[ERROR] Failed to load one or more images: " << SDL_GetError() << std::endl;
+        std::cerr << "Failed to load one or more images: " << SDL_GetError() << std::endl;
         exit(1);
     }
 
-    gBackgroundTexture = SDL_CreateTextureFromSurface(renderer, backgroundSurface);
-    gGameOverTexture = SDL_CreateTextureFromSurface(renderer, gameOverSurface);
-    gGameOverBackground = SDL_CreateTextureFromSurface(renderer, gameOverBackgroundSurface);
+    backgroundTexture = SDL_CreateTextureFromSurface(renderer, backgroundSurface);
+    gameOverTexture = SDL_CreateTextureFromSurface(renderer, gameOverSurface);
     scoreTexture = SDL_CreateTextureFromSurface(renderer, scoreSurface);
     planeTexture = SDL_CreateTextureFromSurface(renderer, planeSurface);
     projectileTexture = SDL_CreateTextureFromSurface(renderer, projectileSurface);
     enemyTexture = SDL_CreateTextureFromSurface(renderer, enemySurface);
-    cautionTexture = SDL_CreateTextureFromSurface(renderer, cautionSignSurface);
-    
+
     portal_in.texture = SDL_CreateTextureFromSurface(renderer, portalSurface);
     if (!portal_in.texture)
     {
-        std::cerr << "[ERROR] Failed to create portal_in texture: " << SDL_GetError() << std::endl;
+        std::cerr << "Failed to create portal_in texture: " << SDL_GetError() << std::endl;
         exit(1);
     }
 
     portal_out.texture = SDL_CreateTextureFromSurface(renderer, portalOutSurface);
     if (!portal_out.texture)
     {
-        std::cerr << "[ERROR] Failed to create portal_out texture: " << SDL_GetError() << std::endl;
+        std::cerr << "Failed to create portal_out texture: " << SDL_GetError() << std::endl;
         exit(1);
     }
 
     SDL_FreeSurface(backgroundSurface);
     SDL_FreeSurface(gameOverSurface);
-    SDL_FreeSurface(gameOverBackgroundSurface);
     SDL_FreeSurface(scoreSurface);
     SDL_FreeSurface(planeSurface);
     SDL_FreeSurface(projectileSurface);
@@ -323,7 +303,6 @@ void loadGame(SDL_Renderer *renderer, SDL_Window *window)
 void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int SCREEN_HEIGHT, bool miniBoss_flag, bool megaBoss_flag)
 {
     bool onCollision = false;
-    int cnter = 0;
 
     player.rect = {100, 100, 32, 32};
 
@@ -338,7 +317,7 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
 
         if (digitSurface == nullptr)
         {
-            std::cerr << "[ERROR] Could not load digit image: " << SDL_GetError() << std::endl;
+            std::cout << "Could not load digit image: " << SDL_GetError() << std::endl;
         }
         else
         {
@@ -353,14 +332,14 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
 
     PlayerProjectile playerProjectiles[MAX_PROJECTILES];
 
-    // MiniBoss miniBoss;
+    MiniBoss miniBoss;
     miniBoss.isActive = false;
     miniBoss.rect = {SCREEN_WIDTH / 2 - 150, -300, 500, 325};
     miniBoss.health = 100;
     miniBoss.speed = 1;
     miniBoss.texture = SDL_CreateTextureFromSurface(renderer, SDL_LoadBMP("visuals/miniBoss.bmp"));
 
-    // MegaBoss megaBoss;
+    MegaBoss megaBoss;
     SDL_Texture *megaBossBodyTex = SDL_CreateTextureFromSurface(renderer, SDL_LoadBMP("visuals/megaBoss_body.bmp"));
     SDL_Texture *leftArmTex = SDL_CreateTextureFromSurface(renderer, SDL_LoadBMP("visuals/left_arm.bmp"));
     SDL_Texture *rightArmTex = SDL_CreateTextureFromSurface(renderer, SDL_LoadBMP("visuals/right_arm.bmp"));
@@ -373,7 +352,7 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
         miniBossProjectiles[i].speed = 1;
         miniBossProjectiles[i].rect.w = 20;
         miniBossProjectiles[i].rect.h = 20;
-        miniBossProjectiles[i].texture = SDL_CreateTextureFromSurface(renderer, SDL_LoadBMP("visuals/miniBossProjectile.bmp"));
+        miniBossProjectiles[i].texture = SDL_CreateTextureFromSurface(renderer, SDL_LoadBMP("visuals/enemy.bmp"));
     }
 
     for (int i = 0; i < MAX_PROJECTILES; ++i)
@@ -396,21 +375,15 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
         enemies[i].texture = enemyTexture;
     }
 
+    int score = 0;
+    const int ENEMY_SPEED = 1;
+
     bool gameRunning = true;
     bool gameOver = false;
     Uint32 lastShotTime = 0;
     const Uint32 cooldownTime = 500;
     while (true)
     {
-        if(newgame_flag)
-        {
-            SDL_ShowCursor(SDL_DISABLE);
-            newgame_flag = false;
-            miniBoss_flag = true;
-            megaBoss_flag = true;
-            playerScore = 0;
-        }
-
         if (SDL_PollEvent(&windowEvent))
         {
             if (SDL_QUIT == windowEvent.type)
@@ -442,7 +415,7 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
                         playerProjectiles[1].rect.x = mouseX + wingBXOffset;
                         playerProjectiles[1].rect.y = mouseY + wingYOffset;
 
-                        if (playerScore > 110 && playerScore <= 200)
+                        if (score > 110 && score <= 200)
                         {
                             playerProjectiles[2].isActive = true;
                             playerProjectiles[3].isActive = true;
@@ -468,7 +441,7 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
 
         SDL_RenderClear(renderer);
 
-        SDL_RenderCopy(renderer, gBackgroundTexture, NULL, NULL);
+        SDL_RenderCopy(renderer, backgroundTexture, NULL, NULL);
 
         for (int i = 0; i < MAX_ENEMIES; i++)
         {
@@ -522,7 +495,7 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
 
         int x0, y0;
         bool exitPortalFlag;
-        if (playerScore == 0)
+        if (score == 0)
         {
             exitPortalFlag = true;
         }
@@ -530,11 +503,11 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
         {
             if (enemies[i].isActive && !miniBoss.isActive && !megaBoss.isActive)
             {
-                if (playerScore < 100 || i % 25 != 0)
+                if (score < 100 || i % 25 != 0)
                 {
                     enemies[i].rect.y += ENEMY_SPEED / ENEMY_SPEED_DIVISOR;
 
-                    if (i % 7 == 0 && playerScore > 50)
+                    if (i % 7 == 0 && score > 50)
                     {
                         CursorPosition cursor = getCurrentCursorPosition();
                         teleportEnemy(enemies[i], 980, 750, cursor, portal_in);
@@ -653,17 +626,19 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
                 enemies[i].rect.h = rand() % 150 + 50;
             }
 
-            if (playerScore >= 10 && miniBoss_flag)
+            if (score >= 15 && miniBoss_flag)
             {
                 miniBoss_flag = false;
                 miniBoss.isActive = true;
                 clearEnemies(enemies, MAX_ENEMIES);
+                // handleMiniBoss(miniBoss, miniBoss_flag, renderer, playerProjectiles, imageRect, onCollision, digitTextures, score); //esctract the code???
 
                 SDL_Delay(200);
             }
 
-            if (playerScore >= 150 && megaBoss_flag)
+            if (score >= 250 && megaBoss_flag)
             {
+                std::cout << "score >= 50" << std::endl;
                 megaBoss_flag = false;
                 megaBoss.isActive = true;
                 clearEnemies(enemies, MAX_ENEMIES);
@@ -673,7 +648,7 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
             if (megaBoss.isActive)
             {
                 // Render megaBoss body (face)
-                drawWhiteBorder(renderer, megaBoss.body.rect); //debugsquare
+                drawWhiteBorder(renderer, megaBoss.body.rect);
                 SDL_RenderCopy(renderer, megaBoss.body.texture, NULL, &megaBoss.body.rect);
 
                 // Projectile collision with body
@@ -687,7 +662,7 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
                         if (megaBoss.health <= 0)
                         {
                             megaBoss.isActive = false;
-                            std::cout << " [INFO] Mega MiniBoss defeated!" << std::endl;
+                            std::cout << "Mega MiniBoss defeated!" << std::endl;
                         }
                     }
                 }
@@ -699,333 +674,205 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
                 if (megaBoss.health < 100)
                     phase = 3;
 
-                // Cooldowns to slow movement updates
+                // Cooldowns
                 static int leftCooldown = 0;
                 static int rightCooldown = 0;
                 leftCooldown++;
                 rightCooldown++;
 
-                // Movement speed (pixels per update)
-                const int speed = 1;
+                // Cooldown triggers (in frames)
+                int leftTrigger = 600;
+                int rightTrigger = 750;
 
-                // Movement update triggers (frames)
-                const int moveTrigger = 15;
-
-                // Static state for left arm
-                static int leftPattern = -1;   // 0=top->bottom,1=bottom->top,2=left->right,3=right->left
-                static float leftAngle = 0;
-
-                // Static state for right arm
-                static int rightPattern = -1;
-                static float rightAngle = 0;
-
-                // Static state for caution sign before left arm appears
-                static bool cautionPhaseActive = true; // true means caution sign blinking
-                static int cautionBlinkCount = 0;
-                static int cautionBlinkTimer = 0;
-                const int cautionBlinkInterval = 15; // frames per show/hide toggle
-                const int cautionMaxBlinks = 7;      // total toggles (so ~3-4 full blink cycles)
-
-                // Initialize patterns randomly once on first update
-                if (leftPattern == -1)
+                if (score == 0)
                 {
-                    leftPattern = rand() % 4;
-                    switch(leftPattern)
-                    {
-                        case 0: // top->bottom
-                            megaBoss.leftArm.rect.x = rand() % (SCREEN_WIDTH - megaBoss.leftArm.rect.w);
-                            megaBoss.leftArm.rect.y = -megaBoss.leftArm.rect.h - 10;
-                            break;
-                        case 1: // bottom->top
-                            megaBoss.leftArm.rect.x = rand() % (SCREEN_WIDTH - megaBoss.leftArm.rect.w);
-                            megaBoss.leftArm.rect.y = SCREEN_HEIGHT + 10;
-                            break;
-                        case 2: // left->right
-                            megaBoss.leftArm.rect.x = -megaBoss.leftArm.rect.w - 10;
-                            megaBoss.leftArm.rect.y = rand() % (SCREEN_HEIGHT / 2 - megaBoss.leftArm.rect.h);
-                            break;
-                        case 3: // right->left
-                            megaBoss.leftArm.rect.x = SCREEN_WIDTH + 10;
-                            megaBoss.leftArm.rect.y = rand() % (SCREEN_HEIGHT / 2 - megaBoss.leftArm.rect.h);
-                            break;
-                    }
+                    bit = rand() % 2;
                 }
 
-                if (rightPattern == -1)
+                // LEFT ARM behavior
+                if (leftCooldown >= leftTrigger)
                 {
-                    rightPattern = rand() % 4;
-                    switch(rightPattern)
+                    if (megaBoss.leftArm.rect.y < 100)
                     {
-                        case 0:
-                            megaBoss.rightArm.rect.x = rand() % (SCREEN_WIDTH - megaBoss.rightArm.rect.w);
-                            megaBoss.rightArm.rect.y = -megaBoss.rightArm.rect.h - 10;
-                            break;
-                        case 1:
-                            megaBoss.rightArm.rect.x = rand() % (SCREEN_WIDTH - megaBoss.rightArm.rect.w);
-                            megaBoss.rightArm.rect.y = SCREEN_HEIGHT + 10;
-                            break;
-                        case 2:
-                            megaBoss.rightArm.rect.x = -megaBoss.rightArm.rect.w - 10;
-                            megaBoss.rightArm.rect.y = rand() % (SCREEN_HEIGHT / 2 - megaBoss.rightArm.rect.h);
-                            break;
-                        case 3:
-                            megaBoss.rightArm.rect.x = SCREEN_WIDTH + 10;
-                            megaBoss.rightArm.rect.y = rand() % (SCREEN_HEIGHT / 2 - megaBoss.rightArm.rect.h);
-                            break;
+                        megaBoss.leftArm.rect.y += 0.5;
                     }
-                }
-
-                // --- CAUTION SIGN LOGIC for LEFT ARM ---
-
-                if (cautionPhaseActive)
-                {
-                    cautionBlinkTimer++;
-
-                    if (cautionBlinkTimer >= cautionBlinkInterval)
+                    else
                     {
-                        cautionBlinkTimer = 0;
-                        cautionBlinkCount++;
-                    }
-
-                    // Render caution sign blinking
-                    // Show on even counts, hide on odd counts
-                    if ((cautionBlinkCount % 2) == 0)
-                    {
-                        // Center caution sign on left arm's initial position
-                        int cautionW, cautionH;
-                        SDL_QueryTexture(cautionTexture, NULL, NULL, &cautionW, &cautionH);
-
-                        SDL_Rect cautionRect;
-                        cautionRect.w = cautionW;
-                        cautionRect.h = cautionH;
-                        cautionRect.x = megaBoss.leftArm.rect.x + (megaBoss.leftArm.rect.w / 2) - (cautionW / 2);
-                        cautionRect.y = megaBoss.leftArm.rect.y + (megaBoss.leftArm.rect.h / 2) - (cautionH / 2);
-
-                        SDL_RenderCopy(renderer, cautionTexture, NULL, &cautionRect);
-                    }
-
-                    // Once blinking completed, move to normal left arm movement
-                    if (cautionBlinkCount >= cautionMaxBlinks)
-                    {
-                        cautionPhaseActive = false;
-                        leftCooldown = moveTrigger; // So it moves immediately on next update
-                    }
-                }
-                else
-                {
-                    // LEFT ARM movement and rendering
-
-                    if (leftCooldown >= moveTrigger)
-                    {
-                        switch(leftPattern)
+                        if (brFrames1 <= 3700)
                         {
-                            case 0: // top->bottom
-                                megaBoss.leftArm.rect.y += speed;
-                                if (megaBoss.leftArm.rect.y > SCREEN_HEIGHT)
-                                {
-                                    megaBoss.leftArm.rect.x = rand() % (SCREEN_WIDTH - megaBoss.leftArm.rect.w);
-                                    megaBoss.leftArm.rect.y = -megaBoss.leftArm.rect.h - 10;
-
-                                    // Reset caution phase for next appearance
-                                    cautionPhaseActive = true;
-                                    cautionBlinkCount = 0;
-                                    cautionBlinkTimer = 0;
-                                }
-                                break;
-
-                            case 1: // bottom->top
-                                megaBoss.leftArm.rect.y -= speed;
-                                if (megaBoss.leftArm.rect.y + megaBoss.leftArm.rect.h < 0)
-                                {
-                                    megaBoss.leftArm.rect.x = rand() % (SCREEN_WIDTH - megaBoss.leftArm.rect.w);
-                                    megaBoss.leftArm.rect.y = SCREEN_HEIGHT + 10;
-
-                                    // Reset caution phase for next appearance
-                                    cautionPhaseActive = true;
-                                    cautionBlinkCount = 0;
-                                    cautionBlinkTimer = 0;
-                                }
-                                break;
-
-                            case 2: // left->right
-                                megaBoss.leftArm.rect.x += speed;
-                                if (megaBoss.leftArm.rect.x > SCREEN_WIDTH)
-                                {
-                                    megaBoss.leftArm.rect.x = -megaBoss.leftArm.rect.w - 10;
-                                    megaBoss.leftArm.rect.y = rand() % (SCREEN_HEIGHT / 2 - megaBoss.leftArm.rect.h);
-
-                                    // Reset caution phase for next appearance
-                                    cautionPhaseActive = true;
-                                    cautionBlinkCount = 0;
-                                    cautionBlinkTimer = 0;
-                                }
-                                break;
-
-                            case 3: // right->left
-                                megaBoss.leftArm.rect.x -= speed;
-                                if (megaBoss.leftArm.rect.x + megaBoss.leftArm.rect.w < 0)
-                                {
-                                    megaBoss.leftArm.rect.x = SCREEN_WIDTH + 10;
-                                    megaBoss.leftArm.rect.y = rand() % (SCREEN_HEIGHT / 2 - megaBoss.leftArm.rect.h);
-
-                                    // Reset caution phase for next appearance
-                                    cautionPhaseActive = true;
-                                    cautionBlinkCount = 0;
-                                    cautionBlinkTimer = 0;
-                                }
-                                break;
+                            if (brFrames1 % 12 == 0)
+                            {
+                                megaBoss.leftArm.rect.x += 1;
+                            }
+                            brFrames1++;
                         }
-
-                        leftAngle += 0.1f;
-                        if (leftAngle > 360) leftAngle -= 360;
-
-                        leftCooldown = 0;
-
-                        if (!godmode && checkEnemiesCollision(megaBoss.leftArm.rect, imageRect))
+                        else
                         {
-                            std::cout << "[INFO] Player hit by Left Arm!" << std::endl;
-                            onCollision = true;
-                            clearEnemies(enemies, MAX_ENEMIES);
-                            terminateGame(renderer, digitTextures, playerScore, onCollision);
+                            if (brFrames1 % 1000 == 0)
+                            {
+                                bit = rand() % 2;
+                                if (bit == 0)
+                                {
+                                    bit = -1;
+                                }
+                                megaBossBalance += bit;
+                                if(megaBossBalance > 10 || megaBossBalance < -10)
+                                {
+                                    megaBossBalance -= bit;
+                                    bit = -bit;
+                                    megaBossBalance += bit;
+                                }
+                            }
+                            if (brFrames1 % 36 == 0)
+                            {
+                                megaBoss.leftArm.rect.x += bit;
+                            }
+                            brFrames1++;
+                        }
+                        if (phase == 3)
+                            megaBoss.leftArm.rect.y += 0.3;
+
+                        if (megaBoss.leftArm.rect.x > SCREEN_WIDTH)
+                        {
+                            megaBoss.leftArm.rect.x = -megaBoss.leftArm.rect.w;
+                            megaBoss.leftArm.rect.y = -200;
+                            leftCooldown = 0;
                         }
                     }
 
-                    drawWhiteBorder(renderer, megaBoss.leftArm.rect); //debugsquare
-                    SDL_RenderCopyEx(renderer, megaBoss.leftArm.texture, NULL, &megaBoss.leftArm.rect, leftAngle, NULL, SDL_FLIP_NONE);
-                }
-
-                // RIGHT ARM movement and rendering (unchanged)
-                if (rightCooldown >= moveTrigger)
-                {
-                    switch(rightPattern)
+                    if (!godmode && checkEnemiesCollision(megaBoss.leftArm.rect, imageRect))
                     {
-                        case 0: // top->bottom
-                            megaBoss.rightArm.rect.y += speed;
-                            if (megaBoss.rightArm.rect.y > SCREEN_HEIGHT)
-                            {
-                                megaBoss.rightArm.rect.x = rand() % (SCREEN_WIDTH - megaBoss.rightArm.rect.w);
-                                megaBoss.rightArm.rect.y = -megaBoss.rightArm.rect.h - 10;
-                            }
-                            break;
-
-                        case 1: // bottom->top
-                            megaBoss.rightArm.rect.y -= speed;
-                            if (megaBoss.rightArm.rect.y + megaBoss.rightArm.rect.h < 0)
-                            {
-                                megaBoss.rightArm.rect.x = rand() % (SCREEN_WIDTH - megaBoss.rightArm.rect.w);
-                                megaBoss.rightArm.rect.y = SCREEN_HEIGHT + 10;
-                            }
-                            break;
-
-                        case 2: // left->right
-                            megaBoss.rightArm.rect.x += speed;
-                            if (megaBoss.rightArm.rect.x > SCREEN_WIDTH)
-                            {
-                                megaBoss.rightArm.rect.x = -megaBoss.rightArm.rect.w - 10;
-                                megaBoss.rightArm.rect.y = rand() % (SCREEN_HEIGHT / 2 - megaBoss.rightArm.rect.h);
-                            }
-                            break;
-
-                        case 3: // right->left
-                            megaBoss.rightArm.rect.x -= speed;
-                            if (megaBoss.rightArm.rect.x + megaBoss.rightArm.rect.w < 0)
-                            {
-                                megaBoss.rightArm.rect.x = SCREEN_WIDTH + 10;
-                                megaBoss.rightArm.rect.y = rand() % (SCREEN_HEIGHT / 2 - megaBoss.rightArm.rect.h);
-                            }
-                            break;
+                        std::cout << "Player hit by Left Arm!" << std::endl;
+                        // PlaySound(TEXT("sfx/death.wav"), NULL, SND_FILENAME | SND_ASYNC);
+                        onCollision = true;
+                        clearEnemies(enemies, MAX_ENEMIES);
+                        terminateGame(renderer, digitTextures, score, onCollision);
                     }
 
-                    rightAngle -= 0.1f;
-                    if (rightAngle < 0) rightAngle += 360;
+                    drawWhiteBorder(renderer, megaBoss.leftArm.rect);
+                    SDL_RenderCopy(renderer, megaBoss.leftArm.texture, NULL, &megaBoss.leftArm.rect);
+                }
 
-                    rightCooldown = 0;
+                // RIGHT ARM behavior
+                if (rightCooldown >= rightTrigger)
+                {
+                    if (megaBoss.rightArm.rect.y < 100)
+                    {
+                        megaBoss.rightArm.rect.y += 0.5;
+                    }
+                    else
+                    {
+                        if (brFrames2 <= 3820)
+                        {
+                            if (brFrames2 % 12 == 0)
+                            {
+                                megaBoss.rightArm.rect.x -= 1;
+                            }
+                            brFrames2++;
+                        }
+                        else
+                        {
+                            if (brFrames2 % 36 == 0)
+                            {
+                                megaBoss.rightArm.rect.x += bit;
+                            }
+                            brFrames2++;
+                        }
+                        if (phase == 3)
+                            megaBoss.rightArm.rect.y += 0.3;
+
+                        if (megaBoss.rightArm.rect.x + megaBoss.rightArm.rect.w < 0)
+                        {
+                            megaBoss.rightArm.rect.x = SCREEN_WIDTH + megaBoss.rightArm.rect.w;
+                            megaBoss.rightArm.rect.y = -200;
+                            rightCooldown = 0;
+                        }
+                    }
 
                     if (!godmode && checkEnemiesCollision(megaBoss.rightArm.rect, imageRect))
                     {
-                        megaBoss.leftArm.isActive = false;
-                        megaBoss.body.isActive = false;
-                        megaBoss.rightArm.isActive = false;
-                        megaBoss.isActive = false;
-
-                        std::cout << "[INFO] Player hit by Right Arm!" << std::endl;
+                        std::cout << "Player hit by Right Arm!" << std::endl;
+                        // PlaySound(TEXT("sfx/death.wav"), NULL, SND_FILENAME | SND_ASYNC);
                         onCollision = true;
-                        // megaBoss.isActive = false;
                         clearEnemies(enemies, MAX_ENEMIES);
-                        terminateGame(renderer, digitTextures, playerScore, onCollision);
+                        terminateGame(renderer, digitTextures, score, onCollision);
                     }
-                }
 
-                drawWhiteBorder(renderer, megaBoss.rightArm.rect); //debugsquare
-                SDL_RenderCopyEx(renderer, megaBoss.rightArm.texture, NULL, &megaBoss.rightArm.rect, rightAngle, NULL, SDL_FLIP_NONE);
+                    drawWhiteBorder(renderer, megaBoss.rightArm.rect);
+                    SDL_RenderCopy(renderer, megaBoss.rightArm.texture, NULL, &megaBoss.rightArm.rect);
+                }
             }
 
             if (miniBoss.isActive)
             {
-                // Initial vertical entry
                 if (miniBoss.rect.y < 50)
                 {
                     miniBoss.rect.y += miniBoss.speed / ENEMY_SPEED_DIVISOR;
                 }
                 else
                 {
-                    // Static movement variables
                     static int direction = 1;
                     static int wobbleOffset = 0;
                     static bool wobbleRight = true;
-                    static int wobbleCounter = 0;
                     static int dashCooldown = 0;
 
-                    // Horizontal movement with direction and dash
                     miniBoss.rect.x += (miniBoss.speed * direction) / MINI_BOSS_SPEED_DIVISOR_HORIZONTAL;
 
-                    // Wobble effect vertically
+                    // Add a wobble effect like it's stumbling around
+                    if (wobbleRight)
+                    {
+                        wobbleOffset += 1;
+                        if (wobbleOffset > 4) wobbleRight = false;
+                    }
+                    else
+                    {
+                        wobbleOffset -= 1;
+                        if (wobbleOffset < -4) wobbleRight = true;
+                    }
+
+                    static int wobbleCounter = 0;
                     wobbleCounter++;
                     if (wobbleCounter >= 2)
                     {
                         if (wobbleRight)
                         {
-                            wobbleOffset++;
+                            wobbleOffset += 1;
                             if (wobbleOffset > 4) wobbleRight = false;
                         }
                         else
                         {
-                            wobbleOffset--;
+                            wobbleOffset -= 1;
                             if (wobbleOffset < -4) wobbleRight = true;
                         }
                         wobbleCounter = 0;
                     }
                     miniBoss.rect.y += wobbleOffset % 2;
 
-                    // Bounce off edges
                     if (miniBoss.rect.x <= 0 || miniBoss.rect.x + miniBoss.rect.w >= SCREEN_WIDTH)
                     {
                         direction *= -1;
                     }
 
-                    // Reposition if way off screen
                     if (miniBoss.rect.x < -200 || miniBoss.rect.x > SCREEN_WIDTH + 200)
                     {
                         miniBoss.rect.x = SCREEN_WIDTH / 2 - miniBoss.rect.w / 2;
-                        miniBoss.rect.y -= 50;
+                        miniBoss.rect.y -= 50; 
                     }
 
-                    // Random dash trigger
                     if (dashCooldown <= 0 && rand() % 480 == 0)
                     {
-                        MINI_BOSS_SPEED_DIVISOR_HORIZONTAL = 1;
-                        dashCooldown = 30;
+                        MINI_BOSS_SPEED_DIVISOR_HORIZONTAL = 1; 
+                        dashCooldown = 30;      
                     }
                     else if (dashCooldown > 0)
                     {
                         dashCooldown--;
                         if (dashCooldown == 0)
                         {
-                            MINI_BOSS_SPEED_DIVISOR_HORIZONTAL = 2;
+                            MINI_BOSS_SPEED_DIVISOR_HORIZONTAL = 2; 
                         }
                     }
 
-                    // Handle player projectiles hitting the miniBoss
                     for (int j = 0; j < MAX_PROJECTILES; ++j)
                     {
                         if (playerProjectiles[j].isActive && checkEnemiesCollision(playerProjectiles[j].rect, miniBoss.rect))
@@ -1036,13 +883,12 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
                             if (miniBoss.health <= 0)
                             {
                                 miniBoss.isActive = false;
-                                std::cout << "[INFO] MiniBoss defeated!" << std::endl;
+                                std::cout << "MiniBoss defeated!" << std::endl;
                             }
                         }
                     }
                 }
 
-                // Shooting projectiles from miniBoss
                 static int bossShootTimer = 0;
                 bossShootTimer++;
                 if (bossShootTimer >= 3600)
@@ -1061,44 +907,6 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
                     }
                 }
 
-                // Animate miniBoss
-                SDL_RenderCopy(renderer, miniBoss.texture, NULL, &miniBoss.rect);
-
-                // Handle miniBoss projectile movement and collisions
-                static int projectileSpeedToggleCounter = 0;
-                for (int i = 0; i < MAX_BOSS_PROJECTILES; ++i)
-                {
-                    if (miniBossProjectiles[i].isActive)
-                    {
-                        miniBossProjectiles[i].rect.y += miniBossProjectiles[i].speed / MINI_BOSS_SPEED_DIVISOR;
-
-                        // Toggle projectile speed every 60 frames
-                        projectileSpeedToggleCounter++;
-                        if (projectileSpeedToggleCounter >= 60)
-                        {
-                            MINI_BOSS_SPEED_DIVISOR = (MINI_BOSS_SPEED_DIVISOR == 1) ? 2 : 1;
-                            projectileSpeedToggleCounter = 0;
-                        }
-
-                        if (miniBossProjectiles[i].rect.y > SCREEN_HEIGHT)
-                        {
-                            miniBossProjectiles[i].isActive = false;
-                        }
-
-                        SDL_RenderCopy(renderer, miniBossProjectiles[i].texture, NULL, &miniBossProjectiles[i].rect);
-
-                        if (!godmode && checkEnemiesCollision(miniBossProjectiles[i].rect, imageRect))
-                        {
-                            std::cout << "[INFO] Player hit by miniBoss projectile!" << std::endl;
-                            onCollision = true;
-                            miniBoss_flag = true;
-                            clearEnemies(enemies, MAX_ENEMIES);
-                            terminateGame(renderer, digitTextures, playerScore, onCollision);
-                        }
-                    }
-                }
-
-                // ENEMY_SPEED_DIVISOR toggling (used elsewhere)
                 if (ENEMY_SPEED_DIVISOR == 1)
                 {
                     ENEMY_SPEED_DIVISOR = 2;
@@ -1113,11 +921,55 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
                 {
                     cnter++;
                 }
+
+                SDL_RenderCopy(renderer, miniBoss.texture, NULL, &miniBoss.rect);
+
+                for (int i = 0; i < MAX_BOSS_PROJECTILES; ++i)
+                {
+                    if (miniBossProjectiles[i].isActive)
+                    {
+                        miniBossProjectiles[i].rect.y += miniBossProjectiles[i].speed / MINI_BOSS_SPEED_DIVISOR;
+
+                        if (MINI_BOSS_SPEED_DIVISOR == 1)
+                        {
+                            MINI_BOSS_SPEED_DIVISOR = 2;
+                            counter = 0;
+                        }
+                        else if (counter == 60)
+                        {
+                            MINI_BOSS_SPEED_DIVISOR = 1;
+                            counter = 0;
+                        }
+                        else
+                        {
+                            counter++;
+                        }
+
+                        if (miniBossProjectiles[i].rect.y > SCREEN_HEIGHT)
+                        {
+                            miniBossProjectiles[i].isActive = false;
+                        }
+
+                        SDL_RenderCopy(renderer, miniBossProjectiles[i].texture, NULL, &miniBossProjectiles[i].rect);
+
+                        if (!godmode)
+                        {
+                            if (checkEnemiesCollision(miniBossProjectiles[i].rect, imageRect))
+                            {
+                                std::cout << "Player hit by miniBoss projectile!" << std::endl;
+                                // PlaySound(TEXT("sfx/death.wav"), NULL, SND_FILENAME | SND_ASYNC);
+                                onCollision = true;
+                                clearEnemies(enemies, MAX_ENEMIES);
+                                terminateGame(renderer, digitTextures, score, onCollision);
+                            }
+                        }
+                    }
+                }
             }
 
             for (int j = 0; j < MAX_PROJECTILES; ++j)
             {
-                if (playerScore > 200 && playerProjectiles[j].isActive)
+                if (score > 200 && playerProjectiles[j].isActive)
                 {
                     if (checkEnemiesCollision(playerProjectiles[j].rect, enemies[i].rect))
                     {
@@ -1131,10 +983,24 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
 
                             if (checkEnemiesCollision(explosionRect, enemies[ii].rect))
                             {
+                                // Keep rendering the projectile texture for the explosion effect
+                                // SDL_RenderCopy(renderer, playerProjectiles[j].texture, NULL, &playerProjectiles[j].rect);
+
+                                // Deactivate the projectile
                                 playerProjectiles[j].isActive = false;
+
+                                // Deactivate the enemy
                                 enemies[ii].isActive = false;
+
+                                // Play explosion sound
                                 // PlaySound(TEXT("sfx/death.wav"), NULL, SND_FILENAME | SND_ASYNC);
-                                playerScore++;
+
+                                // Render explosion effect (optional: use a filled rectangle)
+                                // SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Red color
+                                // SDL_RenderFillRect(renderer, &explosionRect);
+
+                                // Increment the score
+                                score++;
                             }
                         }
                     }
@@ -1143,14 +1009,15 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
                 {
 
                     // PlaySound(TEXT("sfx/enemydies.wav"), NULL, SND_FILENAME | SND_ASYNC);
+                    // Use enemy coordinates
                     effects[i].x = enemies[i].rect.x + enemies[i].rect.w / 2;
                     effects[i].y = enemies[i].rect.y + enemies[i].rect.h / 2;
-                    effects[i].timer = 180;
+                    effects[i].timer = 180; // show for 30 frames (~0.5 sec at 60fps)
                     effects[i].active = true;
 
                     playerProjectiles[j].isActive = false;
                     enemies[i].isActive = false;
-                    playerScore++;
+                    score++;
                 }
             }
             if (!godmode)
@@ -1167,7 +1034,7 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
                         // PlaySound(TEXT("sfx/death.wav"), NULL, SND_FILENAME | SND_ASYNC);
                         onCollision = true;
                         clearEnemies(enemies, MAX_ENEMIES);
-                        terminateGame(renderer, digitTextures, playerScore, onCollision);
+                        terminateGame(renderer, digitTextures, score, onCollision);
                     }
                 }
             }
@@ -1192,11 +1059,11 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
         if (portal_in.isActive && SDL_HasIntersection(&imageRect2, &portal_in.rect))
         {
             teleportPlayer(window, SCREEN_WIDTH, SCREEN_HEIGHT, x0, y0);
-            portal_in.isActive = false;
+            portal_in.isActive = false; // deactivate portal after use
             portal_out.isActive = false;
             exitPortalFlag = true;
-
-            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+            // Draw player (simple color block)
+            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255); // green
             SDL_RenderFillRect(renderer, &player.rect);
         }
 
@@ -1204,8 +1071,8 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
         int digitHeight = 30;
         int xPosition = SCREEN_WIDTH - digitWidth;
 
-        int remainingScore = playerScore;
-        int digitCount = (playerScore == 0) ? 1 : 0;
+        int remainingScore = score;
+        int digitCount = (score == 0) ? 1 : 0;
 
         while (remainingScore != 0)
         {
@@ -1213,7 +1080,7 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
             digitCount++;
         }
 
-        remainingScore = playerScore;
+        remainingScore = score;
 
         if (digitCount == 0)
         {
@@ -1234,7 +1101,7 @@ void gameLogic(SDL_Renderer *renderer, SDL_Window *window, int SCREEN_WIDTH, int
         SDL_RenderPresent(renderer);
         SDL_RenderClear(renderer);
     }
-    terminateGame(renderer, digitTextures, playerScore, onCollision);
+    terminateGame(renderer, digitTextures, score, onCollision);
 }
 
 void initStars()
@@ -1279,7 +1146,7 @@ void handlePortalCollision(SDL_Rect &playerRect, Portal &portal, int screenWidth
         playerRect.y = rand() % (screenHeight - playerRect.h);
 
         portal.isActive = false;
-        std::cout << "[INFO] Player teleported!" << std::endl;
+        std::cout << "Player teleported!" << std::endl;
     }
 }
 
@@ -1319,10 +1186,11 @@ void teleportEnemy(Enemy &enemy, int screenWidth, int screenHeight, const Cursor
 
         // PlaySound(TEXT("sfx/teleport.wav"), NULL, SND_FILENAME | SND_ASYNC);
 
+        // Spawn portal at enemy's new location
         portal.isActive = true;
         portal.rect.x = newX;
         portal.rect.y = newY;
-        portal.rect.w = 64;
+        portal.rect.w = 64; // set dimensions if needed
         portal.rect.h = 64;
 
         lastTeleportTime = currentTime;
@@ -1340,6 +1208,7 @@ void screenShake(SDL_Renderer *renderer, int intensity, int duration)
         SDL_Delay(10);
     }
 
+    // Reset logical size to default screen dimensions
     SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 }
 
@@ -1365,24 +1234,23 @@ void renderHealthBar(SDL_Renderer *renderer, const MiniBoss &miniBoss)
 void initMegaBoss(MegaBoss &megaBoss, SDL_Texture *bodyTex, SDL_Texture *leftArmTex, SDL_Texture *rightArmTex)
 {
     megaBoss.body.texture = bodyTex;
-    megaBoss.body.rect = {SCREEN_WIDTH / 2 - 150, 0, 250, 250};
+    megaBoss.body.rect = {SCREEN_WIDTH / 2 - 100, 0, 200, 200};
     megaBoss.body.isActive = true;
     megaBoss.body.speed = 0;
 
     megaBoss.leftArm.texture = leftArmTex;
-    megaBoss.leftArm.rect = {-200, 100, 200, 600};
+    megaBoss.leftArm.rect = {-200, 100, 200, 600}; // starts offscreen
     megaBoss.leftArm.isActive = true;
     megaBoss.leftArm.speed = 4;
 
     megaBoss.rightArm.texture = rightArmTex;
-    megaBoss.rightArm.rect = {SCREEN_WIDTH, 100, 200, 600};
+    megaBoss.rightArm.rect = {SCREEN_WIDTH, 100, 200, 600}; // starts offscreen
     megaBoss.rightArm.isActive = true;
     megaBoss.rightArm.speed = 4;
 
     megaBoss.health = 300;
     megaBoss.isActive = false;
 }
-
 
 bool checkEnemiesCollision(const SDL_Rect &projectileRect, const SDL_Rect &enemyRect)
 {
@@ -1398,9 +1266,6 @@ void createExplosion(int x, int y, SDL_Texture *explosionTexture)
 
 void clearEnemies(Enemy enemies[], int maxEnemies)
 {
-    miniBoss_flag = true;
-    megaBoss_flag = true;
-
     for (int i = 0; i < maxEnemies; ++i)
     {
         enemies[i].isActive = false;
@@ -1409,25 +1274,24 @@ void clearEnemies(Enemy enemies[], int maxEnemies)
     }
 }
 
-void renderGameOver(SDL_Renderer *renderer, SDL_Texture *digitTextures[], SDL_Texture *scoreTexture, int playerScore)
+void renderGameOver(SDL_Renderer *renderer, SDL_Texture *gameOverTexture, SDL_Texture *digitTextures[], SDL_Texture *scoreTexture, int score)
 {
-    
-    SDL_ShowCursor(SDL_ENABLE);
+    SDL_ShowCursor(SDL_ENABLE);  // Show mouse cursor
 
     const int digitWidth = 60;
     const int digitHeight = 90;
 
-    int scoreLength = playerScore > 0 ? (int)log10(playerScore) + 1 : 1;
+    int scoreLength = score > 0 ? (int)log10(score) + 1 : 1;
 
-    SDL_RenderCopy(gRenderer, gGameOverBackground, nullptr, nullptr);
-
+    // Game Over banner
     SDL_Rect gameOverRect = {
         SCREEN_WIDTH / 2 - 300 / 2,
         SCREEN_HEIGHT / 8,
         300,
         100};
-    SDL_RenderCopy(renderer, gGameOverTexture, NULL, &gameOverRect);
+    SDL_RenderCopy(renderer, gameOverTexture, NULL, &gameOverRect);
 
+    // "Score" label
     SDL_Rect scoreRect = {
         SCREEN_WIDTH / 2 - 100 / 2,
         gameOverRect.y + gameOverRect.h + 20,
@@ -1435,12 +1299,13 @@ void renderGameOver(SDL_Renderer *renderer, SDL_Texture *digitTextures[], SDL_Te
         50};
     SDL_RenderCopy(renderer, scoreTexture, NULL, &scoreRect);
 
+    // Digits
     int scorePositionX = SCREEN_WIDTH / 2 - (scoreLength * digitWidth) / 2;
     int scorePositionY = scoreRect.y + scoreRect.h + 20;
 
     for (int i = 0; i < scoreLength; ++i)
     {
-        int digit = (int)(playerScore / pow(10, scoreLength - i - 1)) % 10;
+        int digit = (int)(score / pow(10, scoreLength - i - 1)) % 10;
         SDL_Rect digitRect = {
             scorePositionX + i * digitWidth,
             scorePositionY,
@@ -1448,11 +1313,33 @@ void renderGameOver(SDL_Renderer *renderer, SDL_Texture *digitTextures[], SDL_Te
             digitHeight};
         SDL_RenderCopy(renderer, digitTextures[digit], NULL, &digitRect);
     }
+
+    // "Play Again" button - lower on the screen
+    SDL_Rect playAgainButton = {
+        SCREEN_WIDTH / 2 - 100,     // center horizontally
+        SCREEN_HEIGHT - 200,        // lowered to near bottom
+        200,
+        50
+    };
+
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // white
+    SDL_RenderFillRect(renderer, &playAgainButton);
+
+    // "Quit Game" button - right below Play Again
+    SDL_Rect quitButton = {
+        SCREEN_WIDTH / 2 - 100,
+        playAgainButton.y + playAgainButton.h + 20, // 20px spacing
+        200,
+        50
+    };
+
+    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255); // light gray
+    SDL_RenderFillRect(renderer, &quitButton);
 }
 
-void terminateGame(SDL_Renderer *renderer, SDL_Texture *digitTextures[], int playerScore, bool onCollision)
+void terminateGame(SDL_Renderer *renderer, SDL_Texture *digitTextures[], int score, bool onCollision)
 {
-    // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black background
 
     if (!onCollision)
     {
@@ -1460,29 +1347,30 @@ void terminateGame(SDL_Renderer *renderer, SDL_Texture *digitTextures[], int pla
         return;
     }
 
-    megaBoss.leftArm.isActive = false;
-    megaBoss.body.isActive = false;
-    megaBoss.rightArm.isActive = false;
-    megaBoss.isActive = false;
-
-    std::cout << "[INFO] Game Over" << std::endl;
+    std::cout << "Game Over" << std::endl;
 
     SDL_RenderClear(renderer);
-    renderGameOver(renderer, digitTextures, scoreTexture, playerScore);
+    renderGameOver(renderer, gameOverTexture, digitTextures, scoreTexture, score);
 
+    // "Play Again" button - near bottom
     SDL_Rect playAgainButton = {
-        SCREEN_WIDTH / 2 - 100,
-        SCREEN_HEIGHT - 200,  
+        SCREEN_WIDTH / 2 - 100,     // center horizontally
+        SCREEN_HEIGHT - 200,        // lowered to near bottom
         200,
         50
     };
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // white
+    SDL_RenderFillRect(renderer, &playAgainButton);
 
+    // "Quit Game" button - right below Play Again
     SDL_Rect quitButton = {
         SCREEN_WIDTH / 2 - 100,
-        playAgainButton.y + playAgainButton.h + 20, 
+        playAgainButton.y + playAgainButton.h + 20, // 20px spacing
         200,
         50
     };
+    SDL_SetRenderDrawColor(renderer, 200, 0, 0, 255); // red for quit
+    SDL_RenderFillRect(renderer, &quitButton);
 
     SDL_RenderPresent(renderer);
 
@@ -1506,23 +1394,24 @@ void terminateGame(SDL_Renderer *renderer, SDL_Texture *digitTextures[], int pla
                 if (x >= playAgainButton.x && x <= playAgainButton.x + playAgainButton.w &&
                     y >= playAgainButton.y && y <= playAgainButton.y + playAgainButton.h)
                 {
-                    std::cout << "[Info] Play Again clicked.\n";
+                    std::cout << "Play Again clicked.\n";
                     currentGameState = GameState::MENU;
-                    playerScore = 0;
                     waiting = false;
                 }
                 else if (x >= quitButton.x && x <= quitButton.x + quitButton.w &&
                          y >= quitButton.y && y <= quitButton.y + quitButton.h)
                 {
-                    std::cout << "[Info] Quit clicked.\n";
-                    quitGame();
+                    std::cout << "Quit clicked.\n";
+                    SDL_Quit();
+                    exit(0);
                 }
             }
         }
     }
     if(waiting == false)
     {
-        loadMedia();
+        std::cout << "HERE\n";
+        // loadGame(renderer, window);
         runMenu();
     }
 }
@@ -1551,42 +1440,27 @@ void handleButtonClick(int buttonId)
 
     switch (buttonId)
     {
-    case 0:
+    case 0: // PLAY
         std::cout << "[Info] Button 0 (PLAY) clicked.\n";
+        close(); // Clean up menu resources if necessary
         currentGameState = GameState::PLAY;
-        if(!newgame_flag)
-        {
-            newgame_flag = true;
-        }
         std::cout << "[Info] Game state changed to PLAY.\n";
         break;
 
-    case 1:
+    case 1: // HOW TO PLAY
         std::cout << "[Info] Button 1 (HOW TO PLAY) clicked.\n";
         currentGameState = GameState::HOWTOPLAY;
-        if(!howToPlay_flag)
-        {
-            runHowToPlay();
-        }
         std::cout << "[Info] Game state changed to HOWTOPLAY.\n";
         break;
 
-    case 2:
+    case 2: // CREDITS
         std::cout << "[Info] Button 2 (CREDITS) clicked.\n";
         currentGameState = GameState::CREDITS;
-        if(!credits_flag)
-        {
-            runCredits();
-        }
         std::cout << "[Info] Game state changed to CREDITS.\n";
         break;
 
-    case 3:
+    case 3: // QUIT
         std::cout << "[Info] Button 3 (QUIT) clicked.\n";
-        if(!credits_flag)
-        {
-            quitGame();
-        }
         quit = true;
         std::cout << "[Info] Quit flag set to true.\n";
         break;
@@ -1610,14 +1484,14 @@ SDL_Texture *loadTexture(const char *path)
     SDL_Surface *loadedSurface = SDL_LoadBMP(path);
     if (loadedSurface == nullptr)
     {
-        std::cerr << "[ERROR] Unable to load image " << path << "! SDL Error: " << SDL_GetError() << std::endl;
+        std::cerr << "Unable to load image " << path << "! SDL Error: " << SDL_GetError() << std::endl;
     }
     else
     {
         newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
         if (newTexture == nullptr)
         {
-            std::cerr << "[ERROR] Unable to create texture from " << path << "! SDL Error: " << SDL_GetError() << std::endl;
+            std::cerr << "Unable to create texture from " << path << "! SDL Error: " << SDL_GetError() << std::endl;
         }
         SDL_FreeSurface(loadedSurface);
     }
@@ -1625,10 +1499,16 @@ SDL_Texture *loadTexture(const char *path)
     return newTexture;
 }
 
-void quitGame()
+void quitGame(SDL_Window *window, SDL_Renderer *renderer) // not called - to be called after player decides to quit
 {
+    // Basic cleanup
+    if (renderer)
+        SDL_DestroyRenderer(renderer);
+    if (window)
+        SDL_DestroyWindow(window);
+
     SDL_Quit();
-    exit(0);
+    exit(0); // Immediately terminates the application
 }
 
 void drawWhiteBorder(SDL_Renderer *renderer, SDL_Rect rect)
@@ -1641,9 +1521,9 @@ void drawWhiteBorder(SDL_Renderer *renderer, SDL_Rect rect)
 
     const int thickness = 4;
 
-    renderer = NULL;
-    // SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White
 
+    // Top border
     SDL_Rect top = {
         rect.x - thickness,
         rect.y - thickness,
@@ -1651,6 +1531,7 @@ void drawWhiteBorder(SDL_Renderer *renderer, SDL_Rect rect)
         thickness};
     SDL_RenderFillRect(renderer, &top);
 
+    // Bottom border
     SDL_Rect bottom = {
         rect.x - thickness,
         rect.y + rect.h,
@@ -1658,6 +1539,7 @@ void drawWhiteBorder(SDL_Renderer *renderer, SDL_Rect rect)
         thickness};
     SDL_RenderFillRect(renderer, &bottom);
 
+    // Left border
     SDL_Rect left = {
         rect.x - thickness,
         rect.y,
@@ -1665,6 +1547,7 @@ void drawWhiteBorder(SDL_Renderer *renderer, SDL_Rect rect)
         rect.h};
     SDL_RenderFillRect(renderer, &left);
 
+    // Right border
     SDL_Rect right = {
         rect.x + rect.w,
         rect.y,
@@ -1675,43 +1558,55 @@ void drawWhiteBorder(SDL_Renderer *renderer, SDL_Rect rect)
 
 int main(int argc, char *argv[])
 {
+    srand(static_cast<unsigned int>(time(0))); // call this once, in main()
     if (!init())
     {
-        std::cerr << "[ERROR] Failed to initialize!" << std::endl;
+        std::cerr << "Failed to initialize!" << std::endl;
     }
     else
     {
         if (!loadMedia())
         {
-            std::cerr << "[ERROR] Failed to load media!" << std::endl;
+            std::cerr << "Failed to load media!" << std::endl;
         }
         else
         {
+            SDL_Event e;
+            bool quit = false;
+
             while (!quit)
             {
+                std::cerr << "while (!quit)" << std::endl;
+
                 switch (currentGameState)
                 {
-                case GameState::MENU:
-                    runMenu();
-                    break;
+                    case GameState::MENU:
+                        std::cerr << "GameState::MENU:" << std::endl;
+                        runMenu();
+                        break;
 
-                case GameState::PLAY:
-                    // PlaySound(NULL, NULL, 0);
-                    startGame();
-                    break;
+                    case GameState::PLAY:
+                        startGame();
+                        break;
 
-                case GameState::HOWTOPLAY:
-                    runHowToPlay();
-                    break;
+                    case GameState::HOWTOPLAY:
+                        runHowToPlay();
+                        break;
 
-                case GameState::CREDITS:
-                    runCredits();
-                    break;
+                    case GameState::CREDITS:
+                        runCredits();
+                        break;
 
-                case GameState::QUIT:
-                    quitGame();
-                    break;
+                    case GameState::GAME_OVER:
+                        // Render Game Over screen here, call renderGameOver()
+                        // renderGameOver(renderer, gameOverTexture, digitTextures, scoreTexture, finalScore);
+                        break;
+
+                    case GameState::QUIT:
+                        quit = true;
+                        break;
                 }
+
             }
         }
         close();

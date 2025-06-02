@@ -1,0 +1,28 @@
+For settuping purposes:
+
+Download the code base as of now (probably will update to SDL3 soon)
+
+The libraries are properly setup as of now in the archive
+
+The main.cpp is compiled via g++
+check with g++ --version if installed already
+
+if not - 
+            download from https://winlibs.com/#download
+            latest UCRT runtime:
+            e.g: GCC 14.2.0 (with POSIX threads) + LLVM/Clang/LLD/LLDB 19.1.7 + MinGW-w64 12.0.0 UCRT - release 3   (LATEST)
+
+get the fles via the .7z extract whereever you like
+
+in the folder there is a bin subdirectory, get the path and open command prompt with admin provilages
+
+use 
+rundll32 sysdm.cpl,EditEnvironmentVariables
+
+and in System variables / Path add the path to the bin folder
+
+then everything should be fine
+
+if anything not connects with the powershel of the VS code
+type
+$env:Path += ";D:\path\to\your\bin"
